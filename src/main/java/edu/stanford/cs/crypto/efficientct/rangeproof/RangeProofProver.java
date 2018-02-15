@@ -62,8 +62,8 @@ public class RangeProofProver<T extends GroupElement<T>> implements Prover<Gener
         BigInteger x = ProofUtils.computeChallenge(q,polyCommitment.getCommitments());
 
         PeddersenCommitment<T> evalCommit = polyCommitment.evaluate(x);
-        BigInteger tauX = zSquared.multiply(witness.getR()).add(evalCommit.getR());
-        BigInteger t = evalCommit.getX();
+        BigInteger tauX = zSquared.multiply(witness.getR()).add(evalCommit.getR()).mod(q);
+        BigInteger t = evalCommit.getX().mod(q);
         BigInteger mu = alpha.add(rho.multiply(x)).mod(q);
 
         BigInteger uChallenge = ProofUtils.challengeFromints(q,tauX, mu, t);
