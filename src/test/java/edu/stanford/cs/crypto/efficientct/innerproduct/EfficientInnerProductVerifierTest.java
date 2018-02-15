@@ -2,6 +2,7 @@ package edu.stanford.cs.crypto.efficientct.innerproduct;
 
 import cyclops.collections.immutable.VectorX;
 import edu.stanford.cs.crypto.efficientct.VerificationFailedException;
+import edu.stanford.cs.crypto.efficientct.Verifier;
 import edu.stanford.cs.crypto.efficientct.circuit.groups.BN128Group;
 import edu.stanford.cs.crypto.efficientct.circuit.groups.BouncyCastleECPoint;
 import edu.stanford.cs.crypto.efficientct.circuit.groups.Group;
@@ -13,26 +14,34 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.math.BigInteger;
+import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+
+import static java.util.Arrays.asList;
 
 /**
  * Created by buenz on 6/29/17.
  */
 @RunWith(Parameterized.class)
-
 public class EfficientInnerProductVerifierTest {
     @Parameterized.Parameters
-    public static Object[] data() {
-        return new Object[]{new Secp256k1(), new BN128Group()};
+    public static List<Object[]> data() throws Exception {
+        return asList(
+                new Object[]{new Secp256k1(), new EfficientInnerProductVerifier<BouncyCastleECPoint>()},
+                new Object[]{new BN128Group(), new EfficientInnerProductVerifier<BouncyCastleECPoint>()},
+                new Object[]{new BN128Group(), new EthereumEfficientInnerProductVerifier()}
+        );
     }
 
     private final Group<BouncyCastleECPoint> curve;
+    private final Verifier<VectorBase<BouncyCastleECPoint>, BouncyCastleECPoint, InnerProductProof<BouncyCastleECPoint>> verifier;
 
     private final BigInteger q;
 
-    public EfficientInnerProductVerifierTest(Group<BouncyCastleECPoint> curve) {
+    public EfficientInnerProductVerifierTest(Group<BouncyCastleECPoint> curve, Verifier<VectorBase<BouncyCastleECPoint>, BouncyCastleECPoint, InnerProductProof<BouncyCastleECPoint>> verifier) {
         this.curve = curve;
+        this.verifier = verifier;
         this.q = curve.groupOrder();
     }
 
@@ -53,9 +62,7 @@ public class EfficientInnerProductVerifierTest {
         System.out.println(bs);
         System.out.println(c);
         InnerProductProof<BouncyCastleECPoint> proof = prover.generateProof(parameters, vTot, witness);
-        EfficientInnerProductVerifier<BouncyCastleECPoint> verifier = new EfficientInnerProductVerifier<>();
         verifier.verify(parameters, vTot, proof);
-
     }
 
     @Test(expected = VerificationFailedException.class)
@@ -77,7 +84,6 @@ public class EfficientInnerProductVerifierTest {
         System.out.println(bs);
         System.out.println(c);
         InnerProductProof<BouncyCastleECPoint> proof = prover.generateProof(parameters, vTot, witness);
-        EfficientInnerProductVerifier<BouncyCastleECPoint> verifier = new EfficientInnerProductVerifier<>();
         verifier.verify(parameters, vTot, proof);
 
     }
@@ -85,16 +91,15 @@ public class EfficientInnerProductVerifierTest {
     @Test
     public void testVerifier1() throws Exception {
         InnerProductProofSystem<BouncyCastleECPoint> system = new InnerProductProofSystem<>();
-        VectorBase<BouncyCastleECPoint> parameters = system.generatePublicParams(1024, curve);
+        VectorBase<BouncyCastleECPoint> parameters = system.generatePublicParams(16, curve);
 
-        FieldVector as = FieldVector.random(1024, q);
-        FieldVector bs = FieldVector.random(1024, q);
+        FieldVector as = FieldVector.random(16, q);
+        FieldVector bs = FieldVector.random(16, q);
         BigInteger c = as.innerPoduct(bs);
         BouncyCastleECPoint vTot = parameters.commit(as, bs, c);
         InnerProductWitness witness = new InnerProductWitness(as, bs);
         InnerProductProver<BouncyCastleECPoint> prover = system.getProver();
         InnerProductProof<BouncyCastleECPoint> proof = prover.generateProof(parameters, vTot, witness);
-        EfficientInnerProductVerifier<BouncyCastleECPoint> verifier = new EfficientInnerProductVerifier<>();
         verifier.verify(parameters, vTot, proof);
 
     }
@@ -102,18 +107,16 @@ public class EfficientInnerProductVerifierTest {
     @Test
     public void testVerifier2() throws Exception {
         InnerProductProofSystem<BouncyCastleECPoint> system = new InnerProductProofSystem<>();
-        VectorBase<BouncyCastleECPoint> parameters = system.generatePublicParams(1024, curve);
+        VectorBase<BouncyCastleECPoint> parameters = system.generatePublicParams(16, curve);
 
-        FieldVector as = FieldVector.random(1024, q);
-        FieldVector bs = FieldVector.random(1024, q);
+        FieldVector as = FieldVector.random(16, q);
+        FieldVector bs = FieldVector.random(16, q);
         BigInteger c = as.innerPoduct(bs);
         BouncyCastleECPoint vTot = parameters.commit(as, bs, c);
         InnerProductWitness witness = new InnerProductWitness(as, bs);
         InnerProductProver<BouncyCastleECPoint> prover = system.getProver();
         InnerProductProof<BouncyCastleECPoint> proof = prover.generateProof(parameters, vTot, witness);
-        InnerProductVerifier<BouncyCastleECPoint> verifier = new InnerProductVerifier<>();
         verifier.verify(parameters, vTot, proof);
-
     }
 
 }
