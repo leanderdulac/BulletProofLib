@@ -1,0 +1,31 @@
+{
+  "name": "bulletproof-solidity",
+  "version": "1.0.0",
+  "description": "Solidity verifiers for Bulletproofs",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BANKEX/BulletProofLib.git"
+  },
+  "keywords": [
+    "BANKEX",
+    "crypto",
+    "zk-proofs",
+    "bulletproofs"
+  ],
+  "author": "swasilyev",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/BANKEX/BulletProofLib/issues"
+  },
+  "homepage": "https://github.com/BANKEX/BulletProofLib#readme",
+  "dependencies": {
+    "zeppelin-solidity": "1.6.0"
+  }
+}
