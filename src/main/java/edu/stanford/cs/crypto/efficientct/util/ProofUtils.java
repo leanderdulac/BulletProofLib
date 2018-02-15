@@ -2,37 +2,38 @@ package edu.stanford.cs.crypto.efficientct.util;/*
  * Decompiled with CFR 0_110.
  */
 
+import edu.stanford.cs.crypto.efficientct.circuit.groups.BouncyCastleECPoint;
 import edu.stanford.cs.crypto.efficientct.circuit.groups.GroupElement;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
-import org.bouncycastle.math.ec.ECCurve;
-import org.bouncycastle.math.ec.ECFieldElement;
 import org.bouncycastle.math.ec.ECPoint;
-import org.bouncycastle.math.ec.custom.sec.SecP256K1FieldElement;
+import org.web3j.abi.datatypes.generated.Uint256;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
 
+import static java.util.Arrays.asList;
+import static org.web3j.abi.TypeEncoder.encode;
+import static org.web3j.crypto.Hash.sha3;
+import static org.web3j.utils.Numeric.hexStringToByteArray;
+
 public class ProofUtils {
     private static final ThreadLocal<MessageDigest> KECCACK;
     private static final SecureRandom RNG;
 
-    public static <T extends GroupElement<T>> BigInteger computeChallenge(BigInteger q,T... points) {
-        MessageDigest sha = KECCACK.get();
+    public static <T extends GroupElement<T>> BigInteger computeChallenge(BigInteger q,Iterable<T> points) {
+        StringBuilder x = new StringBuilder();
         for (T point : points) {
-            sha.update(point.canonicalRepresentation());
+            BouncyCastleECPoint z = (BouncyCastleECPoint) point;
+            ECPoint point1 = z.getPoint();
+            point1 = point1.normalize();
+            x.append(encode(new Uint256(point1.getAffineXCoord().toBigInteger()))).append(encode(new Uint256(point1.getAffineYCoord().toBigInteger())));
         }
-        byte[] hash = sha.digest();
-        return new BigInteger(hash).mod(q);
+        return new BigInteger(1, hexStringToByteArray(sha3(x.toString()))).mod(q);
     }
 
-    public static <T extends GroupElement<T>> BigInteger computeChallenge(BigInteger q,Iterable<T> points) {
-        MessageDigest sha = KECCACK.get();
-        for (T point : points) {
-            sha.update(point.canonicalRepresentation());
-        }
-        byte[] hash = sha.digest();
-        return new BigInteger(hash).mod(q);
+    public static <T extends GroupElement<T>> BigInteger computeChallenge(BigInteger q,T... points) {
+        return computeChallenge(q, asList(points));
     }
 
     public static <T extends GroupElement<T>> BigInteger computeChallenge(BigInteger q,BigInteger[] ints, T... points) {
@@ -48,14 +49,12 @@ public class ProofUtils {
     }
 
     public static BigInteger challengeFromints(BigInteger q, BigInteger... ints){
-        MessageDigest sha = KECCACK.get();
-        for (BigInteger integer : ints) {
-            sha.update(integer.toByteArray());
+        StringBuilder x = new StringBuilder();
+        for (BigInteger anInt : ints) {
+            x.append(encode(new Uint256(anInt)));
         }
-        byte[] hash = sha.digest();
-        return new BigInteger(hash).mod(q);
+        return new BigInteger(1, hexStringToByteArray(sha3(x.toString()))).mod(q);
     }
-
 
     public static BigInteger hash(String string) {
         KECCACK.get().update(string.getBytes());
